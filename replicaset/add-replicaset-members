@@ -1,0 +1,34 @@
+- enter mongo shell with admin auth 
+
+mongosh -u "transitfare-root" -p "w3ju5td0?@" --authenticationDatabase "admin"
+
+NB: ensure on admin db if necessary switch via "use admin"
+
+- add the other replica set members (NLB DNS):
+
+rs.add("mongodb-replset-member-2-nlb-96d9f0c707f2f014.elb.eu-west-1.amazonaws.com:27017")- secondary
+rs.add("mongodb-rset-mbr-3-nlb-e06ab9904bc6fc8a.elb.eu-west-1.amazonaws.com:27017")
+
+- confirm replica set health:
+
+rs.status()
+
+- config hidden node i.e. use the last member identified by index value 2:
+
+cfg = rs.conf()
+cfg.members[2].priority = 0
+cfg.members[2].hidden = true
+rs.reconfig(cfg)
+
+- create database(s)/user(s) on primary:
+
+use accountmgmnt
+
+db.createUser({
+    user: 'ozo',
+    pwd: passwordPrompt(),
+    roles: [{ role: 'readWrite', db:'accountmgmnt'}]
+})
+
+
+- exit mongo shell

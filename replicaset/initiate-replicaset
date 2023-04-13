@@ -1,0 +1,27 @@
+- enter mongo shell
+
+mongosh
+
+- use admin db:
+
+use admin
+
+- initiate replicaset:
+
+rs.initiate()
+
+- create root user ensure user and pwd values are replaced:
+
+db.createUser(
+{
+user: "transitfare-root",
+pwd: "w3ju5td0?@",
+roles: [ "root" ]
+}
+)
+
+- auth as the admin user:
+
+db.auth("transitfare-root", "w3ju5td0?@")
+
+- exit

@@ -1,0 +1,197 @@
+---
+- name: install mongodb locally on EC2 Ubuntu Instance
+  hosts: localhost
+  connection: local
+  become: true
+  become_method: sudo
+  debugger: on_failed
+  gather_facts: true
+  tasks:
+
+    - name: install gnupg as precursor for installing mongodb public key
+      ansible.builtin.apt:
+        name: gnupg
+        state: present
+        update_cache: true 
+
+    - name: install mongodb public key
+      ansible.builtin.apt_key:
+        url: https://www.mongodb.org/static/pgp/server-6.0.asc
+        state: present
+
+    - name: add mongodb repository
+      ansible.builtin.apt_repository:
+        repo: deb https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse
+        state: present
+        update_cache: true 
+
+    - name: install mongodb
+      ansible.builtin.apt:
+        name: mongodb-org
+        state: present
+      register: mongodb_installed
+
+    - debug: var=mongodb_installed
+
+    - name: install mongodb dbase tools for mongodump and mongo restore
+      when: mongodb_installed is succeeded
+      ansible.builtin.command: "{{item}}"
+      with_items:
+        - wget https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu1604-x86_64-100.7.0.deb
+        - apt install ./mongodb-database-tools-*-100.7.0.deb
+      register: dbase_tools_installed
+
+    - debug: var=dbase_tools_installed
+
+    - name: edit limits.conf file
+      when: mongodb_installed is succeeded
+      ansible.builtin.blockinfile:
+        path: /etc/ssh/sshd_config
+        block: |
+          * soft nofile 64000
+          * hard nofile 64000
+          * soft nproc 32000
+          * hard nproc 32000
+        backup: yes
+        marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
+      register: limits_conf_res
+
+    - debug: var=limits_conf_res
+
+    - name: create 90.nproc.conf file
+      when: limits_conf_res is succeeded
+      ansible.builtin.copy:
+        dest: /etc/security/limits.d/90-nproc.conf
+        content: |
+          * soft nproc 32000
+          * hard nproc 32000
+      register: nproc_conf_res
+
+    - debug: var=nproc_conf_res
+
+    - name: turn off core dumps
+      when: nproc_conf_res is succeeded
+      ansible.builtin.lineinfile:
+        path: /etc/default/apport
+        regexp: '^enabled=1'
+        line: 'enabled=0'
+        state: present
+        backup: true
+      register: core_dumps_off
+
+    - debug: var=core_dumps_off
+
+    - name: backup existing mongod.conf
+      when: core_dumps_off is succeeded
+      ansible.builtin.command: mv /etc/mongod.conf /etc/mongod.conf.old
+      register: conf_backup_res
+
+    - debug: var=conf_backup_res
+
+    - name: create the /srv/mongod dir
+      when: conf_backup_res is succeeded
+      ansible.builtin.file:
+        path: /srv/mongod
+        state: directory
+        mode: '0755'
+      register: keyfile_dir_res
+
+    - debug: var=keyfile_dir_res
+
+    - name: copy shared sample-keyfile to /srv/mongod/
+      when: keyfile_dir_res is succeeded
+      ansible.builtin.command: mv ./sample-keyfile /srv/mongod/sample-keyfile
+      register: keyfile_copy_res
+
+    - debug: var=keyfile_copy_res
+
+    - name: change permissions for /srv/mongod/sample-keyfile
+      when: keyfile_copy_res is succeeded
+      ansible.builtin.command: chmod 400 /srv/mongod/sample-keyfile
+      register: keyfile_chmod_res
+
+    - debug: var=keyfile_chmod_res
+
+    - name: chown /srv/mongod to mongod process
+      when: keyfile_chmod_res is succeeded
+      ansible.builtin.command: chown -R mongodb:mongodb /srv/mongod/
+      register: keyfile_chown_res
+
+    - debug: var=keyfile_chown_res
+
+    - name: copy hugepages fix to /etc/systemd/system/mongod-hugepage-fix.service
+      when: keyfile_chown_res is succeeded
+      ansible.builtin.command: mv ./hugepages-fix /etc/systemd/system/mongod-hugepage-fix.service
+      register: hugepages_res
+
+    - debug: var=hugepages_res
+
+    - name: enable hugepages fix
+      when: hugepages_res is succeeded
+      ansible.builtin.command: "{{item}}"
+      with_items:
+          - systemctl daemon-reload
+          - systemctl enable mongod-hugepage-fix
+          - systemctl start mongod-hugepage-fix
+      register: hupages_activated_res
+
+    - debug: var=hupages_activated_res
+
+    - name: get ansible_fqdn value
+      when: hupages_activated_res is succeeded
+      ansible.builtin.command: echo {{ ansible_fqdn }}
+      register: fqdn_res
+
+    - debug: var=fqdn_res
+
+    - name: copy mongodb replicaset conf file to /etc/mongod.conf
+      when: fqdn_res is succeeded
+      ansible.builtin.command: mv ./sample.yml /etc/mongod.conf
+      register: new_conf_res
+
+    - debug: var=new_conf_res
+
+    - name: start and enable mongodb
+      when: new_conf_res is succeeded
+      ansible.builtin.systemd:
+        name: mongod
+        state: started
+        enabled: true
+      register: mongod_set
+
+    - debug: var=mongod_set
+
+    - name: check if database backups in s3
+      when: mongod_set is succeeded
+      amazon.aws.s3_object_info:
+        bucket_name: "{{BACKUP_BUCKET}}"
+      register: backup_bucket_output
+
+    - debug: var=backup_bucket_output
+
+    - name: restore backed up database files to running mongod instance
+      when: backup_bucket_output.s3_keys[0] == "{{BACKUP_FILE}}".gz
+      ansible.builtin.shell: bash ./restore.sh {{ fqdn_res.stdout }} {{BACKUP_BUCKET}} {{BACKUP_FILE}}
+      ignore_errors: true
+      register: dbase_restored
+
+    - name: setup cron job to auto backup mongod to S3 every 6 hours
+      when: mongod_set is succeeded
+      ansible.builtin.cron: 
+        name: "backup mongodb"
+        minute: "0"
+        hour: "6,12,18,0"
+        job: "bash ./backup.sh {{ fqdn_res.stdout }} {{BACKUP_BUCKET}} {{BACKUP_FILE}}"
+      register: backup_croned
+
+    - debug: var=backup_croned
+
+    - name: send notification email
+      when: mongod_set is succeeded
+      ansible.builtin.shell: node ./notifiers/data-node.js {{ fqdn_res.stdout }}
+
+  
+
+
+
+      
