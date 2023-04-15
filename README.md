@@ -34,12 +34,12 @@
 ```
 openssl rand -base64 756 > <path-to-keyfile>
 ```
-### restore.sh
-- this is the bash script which restores replica set databases saved to S3 onto a fresh node
+### restore.sh $ backup.sh
+- these arethe bash script which restores replica set databases saved to S3 onto a fresh node
 - insert your values for the [auth creds](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/restore.sh#L5) for the database which will be restored to the replica set
 
 ### provisioning.yml
-- this is the ansible playbook which provisons primary/secondary members of the replica set
+- this is the ansible playbook which provisions primary/secondary members of the replica set
 - replace [mongodb_dbase_backup](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/provisioning.yml#L194) with your chosen filename for the mongodb database zip archive saved on AWS S3. Do NOT add the `.gz` extension
 - repeat the previous step [here](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/provisioning.yml#L193) also
 
@@ -49,6 +49,12 @@ openssl rand -base64 756 > <path-to-keyfile>
 
 ### hugepages-fix
 - this file is a systemd service file to tune the EC2 instance for mongodb in production
+
+## hidden-node.yml
+- this is the ansible playbook which provisions hidden-node of the replica set
+- replace [mongodb_dbase_backup](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/hidden-node.yml#L193) with your chosen filename for the mongodb database zip archive saved on AWS S3. Do NOT add the `.gz` extension
+- repeat the previous step [here](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/hidden-node.yml#L194)
+- and [here](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/hidden-node.yml#L205)
 
 
 ### notifiers

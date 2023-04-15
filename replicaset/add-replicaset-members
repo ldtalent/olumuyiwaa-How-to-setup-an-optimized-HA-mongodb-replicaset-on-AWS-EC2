@@ -1,12 +1,12 @@
-- enter mongo shell with admin auth 
+- enter mongo shell with admin auth
 
 mongosh -u "transitfare-root" -p "w3ju5td0?@" --authenticationDatabase "admin"
 
 NB: ensure on admin db if necessary switch via "use admin"
 
-- add the other replica set members (NLB DNS):
+- add the other replica set members first the secondary, then the hidden node (NLB DNS):
 
-rs.add("mongodb-replset-member-2-nlb-96d9f0c707f2f014.elb.eu-west-1.amazonaws.com:27017")- secondary
+rs.add("mongodb-replset-member-2-nlb-96d9f0c707f2f014.elb.eu-west-1.amazonaws.com:27017")
 rs.add("mongodb-rset-mbr-3-nlb-e06ab9904bc6fc8a.elb.eu-west-1.amazonaws.com:27017")
 
 - confirm replica set health:
@@ -20,7 +20,7 @@ cfg.members[2].priority = 0
 cfg.members[2].hidden = true
 rs.reconfig(cfg)
 
-- create database(s)/user(s) on primary:
+- create test database(s)/user(s) on primary (repeatr this step to create the production database):
 
 use accountmgmnt
 
