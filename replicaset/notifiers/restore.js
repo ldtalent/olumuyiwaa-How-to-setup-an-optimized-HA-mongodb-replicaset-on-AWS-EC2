@@ -36,9 +36,9 @@ const
 transporter.sendMail(
     {
       from: "authorised_sender@your_email.com",
-      to: "authorised_receiver@your_email.com",
-      subject: "Mongodb backup success",
-      text: `Mongodb Databases successfully backed up from: ${MEMBER}!`
+      to: "authorised_sender@your_email.com",
+      subject: "Mongodb data restore success",
+      text: `Mongodb Databases successfully restored to: ${MEMBER}!`
     },
     (err, info) => {
       return console.error(err);

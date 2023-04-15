@@ -36,9 +36,9 @@ const
 transporter.sendMail(
     {
       from: "authorised_sender@your_email.com",
-      to: "authorised_receiver@your_email.com",
-      subject: "Mongodb Data node UP",
-      text: `Mongodb Data node member: ${MEMBER} is UP!`
+      to: "authorised_sender@your_email.com",
+      subject: "Mongodb hidden node UP",
+      text: `Mongodb hidden node : ${MEMBER} is UP!`
     },
     (err, info) => {
       return console.error(err);
