@@ -56,8 +56,13 @@ openssl rand -base64 756 > <path-to-keyfile>
 - repeat the previous step [here](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/hidden-node.yml#L194)
 - and [here](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/hidden-node.yml#L205)
 
-
 ### notifiers
 - there are 4 versions, backup, restore and data/hidden node. these notifiers send an email to the database admin to inform of lifecycle events
 - replace the authorized [sender/receiver](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/notifiers/data-node.js#L38) variables with your AWS SES values
 - replace the authorized [aws region](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/notifiers/data-node.js#L24) variables with your AWS Region value
+
+### models/
+- these are a collection of data models used to illustrate proper data modeling for mongodb
+- NB: Do NOT deploy this directory with the replica set code, these files are in this repo for ease of reference only
+
+### Hire [Olumuyiwa A](https://www.ldtalentwork.com/freelancer/profile/?erid=olumuyiwaa)
