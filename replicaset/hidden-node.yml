@@ -38,7 +38,7 @@
       ansible.builtin.command: "{{item}}"
       with_items:
         - wget https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu1604-x86_64-100.7.0.deb
-        - apt install ./mongodb-database-tools-*-100.7.0.deb
+        - dpkg -i ./mongodb-database-tools-ubuntu1604-x86_64-100.7.0.deb
       register: dbase_tools_installed
 
     - debug: var=dbase_tools_installed
@@ -98,16 +98,16 @@
 
     - debug: var=keyfile_dir_res
 
-    - name: copy shared sample-keyfile to /srv/mongod/
+    - name: copy shared replicaset-keyfile to /srv/mongod/
       when: keyfile_dir_res is succeeded
-      ansible.builtin.command: mv ./sample-keyfile /srv/mongod/sample-keyfile
+      ansible.builtin.command: mv ./replicaset-keyfile /srv/mongod/replicaset-keyfile
       register: keyfile_copy_res
 
     - debug: var=keyfile_copy_res
 
-    - name: change permissions for /srv/mongod/sample-keyfile
+    - name: change permissions for /srv/mongod/replicaset-keyfile
       when: keyfile_copy_res is succeeded
-      ansible.builtin.command: chmod 400 /srv/mongod/sample-keyfile
+      ansible.builtin.command: chmod 400 /srv/mongod/replicaset-keyfile
       register: keyfile_chmod_res
 
     - debug: var=keyfile_chmod_res
@@ -144,9 +144,20 @@
 
     - debug: var=fqdn_res
 
-    - name: copy mongodb replicaset conf file to /etc/mongod.conf
+    - name: install aws cli
       when: fqdn_res is succeeded
-      ansible.builtin.command: mv ./sample.yml /etc/mongod.conf
+      ansible.builtin.command: "{{item}}"
+      with_items:
+          - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          - unzip awscliv2.zip
+          - ./aws/install
+      register: aws_cli_up
+
+    - debug: var=aws_cli_up
+
+    - name: copy sample.conf to /etc/mongod.conf
+      when: aws_cli_up is succeeded
+      ansible.builtin.command: mv ./sample.conf /etc/mongod.conf
       register: new_conf_res
 
     - debug: var=new_conf_res
@@ -161,34 +172,44 @@
 
     - debug: var=mongod_set
 
+    - name: install notifier dependencies
+      when: mongod_set is succeeded
+      ansible.builtin.shell: npm install --prefix ./notifiers
+      register: notifier_up
+
+    - debug: var=notifier_up
+
+    - debug: var=fqdn_res
+
     - name: check if database backups in s3
       when: mongod_set is succeeded
       amazon.aws.s3_object_info:
         bucket_name: "{{BACKUP_BUCKET}}"
       register: backup_bucket_output
 
-    - debug: var=backup_bucket_output
+    - debug: var=backup_bucket_output.s3_keys
 
     - name: restore backed up database files to running mongod instance
-      when: backup_bucket_output.s3_keys[0] == "{{BACKUP_FILE}}".gz
-      ansible.builtin.shell: bash ./restore.sh {{ fqdn_res.stdout }} {{BACKUP_BUCKET}} {{BACKUP_FILE}}
+      when: backup_bucket_output.s3_keys[0] == "mongodb_dbase_backup.gz"
+      ansible.builtin.shell: /bin/bash ./restore.sh {{ fqdn_res.stdout }} {{BACKUP_BUCKET}} mongodb_dbase_backup.gz
       ignore_errors: true
-      register: dbase_restored
+      register: dbase_restored    
 
     - name: setup cron job to auto backup mongod to S3 every 6 hours
       when: mongod_set is succeeded
       ansible.builtin.cron: 
         name: "backup mongodb"
+        user: "ubuntu"
         minute: "0"
         hour: "6,12,18,0"
-        job: "bash ./backup.sh {{ fqdn_res.stdout }} {{BACKUP_BUCKET}} {{BACKUP_FILE}}"
+        job: "/bin/bash /home/ubuntu/<repo_name>/<optional_sub_directory>/backup.sh {{ fqdn_res.stdout }} {{BACKUP_BUCKET}} mongodb_dbase_backup.gz"
       register: backup_croned
 
     - debug: var=backup_croned
 
     - name: send notification email
       when: mongod_set is succeeded
-      ansible.builtin.shell: node ./notifiers/data-node.js {{ fqdn_res.stdout }}
+      ansible.builtin.shell: node ./notifiers/hidden-node.js {{ fqdn_res.stdout }}
 
   
 

@@ -13,11 +13,11 @@
 
 ### example-queries.js
 - this is a set of example queries used to demonstrate proper data modeling for mongodb
-- NB: Do NOT deplot this file with the replica set code, these files are in this repo for ease of reference only
+- NB: Do NOT deploy this file with the replica set code, these files are in this repo for ease of reference only
 
 ### connection.js
 - this file demonstrates a best practice method for connecting to mongodb
-- NB: Do NOT deplot this file with the replica set code, these files are in this repo for ease of reference only
+- NB: Do NOT deploy this file with the replica set code, these files are in this repo for ease of reference only
 
 ### user data
 - there are 2 versions, one for the data nodes, the other for the hidden node
@@ -42,6 +42,14 @@ openssl rand -base64 756 > <path-to-keyfile>
 - this is the ansible playbook which provisons primary/secondary members of the replica set
 - replace [mongodb_dbase_backup](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/provisioning.yml#L194) with your chosen filename for the mongodb database zip archive saved on AWS S3. Do NOT add the `.gz` extension
 - repeat the previous step [here](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/provisioning.yml#L193) also
+
+### initiate-replicaset and add-replicaset-members
+- these files provide instruction on initiating the replica set and adding member nodes after provisioning completes
+- NB: Do NOT deploy this file with the replica set code, these files are in this repo for ease of reference only
+
+### hugepages-fix
+- this file is a systemd service file to tune the EC2 instance for mongodb in production
+
 
 ### notifiers
 - there are 4 versions, backup, restore and data/hidden node. these notifiers send an email to the database admin to inform of lifecycle events
