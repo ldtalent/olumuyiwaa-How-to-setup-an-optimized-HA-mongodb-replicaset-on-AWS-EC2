@@ -38,6 +38,12 @@ openssl rand -base64 756 > <path-to-keyfile>
 - this is the bash script which restores replica set databases saved to S3 onto a fresh node
 - insert your values for the [auth creds](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/restore.sh#L5) for the database which will be restored to the replica set
 
+### provisioning.yml
+- this is the ansible playbook which provisons primary/secondary members of the replica set
+- replace [mongodb_dbase_backup](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/provisioning.yml#L194) with your chosen filename for the mongodb database zip archive saved on AWS S3. Do NOT add the `.gz` extension
+- repeat the previous step [here](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/provisioning.yml#L193) also
+
 ### notifiers
 - there are 4 versions, backup, restore and data/hidden node. these notifiers send an email to the database admin to inform of lifecycle events
-- replace the authorized [sender/receiver](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/restore-notifier.js#L38) variables with your AWS SES values
+- replace the authorized [sender/receiver](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/notifiers/data-node.js#L38) variables with your AWS SES values
+- replace the authorized [aws region](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/notifiers/data-node.js#L24) variables with your AWS Region value

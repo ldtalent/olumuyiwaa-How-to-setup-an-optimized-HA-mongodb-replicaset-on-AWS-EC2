@@ -191,7 +191,7 @@
 
     - name: restore backed up database files to running mongod instance
       when: backup_bucket_output.s3_keys[0] == "mongodb_dbase_backup.gz"
-      ansible.builtin.shell: bash ./restore.sh {{ fqdn_res.stdout }} {{BACKUP_BUCKET}} mongodb_dbase_backup.gz
+      ansible.builtin.shell: bash ./restore.sh {{ fqdn_res.stdout }} {{BACKUP_BUCKET}} mongodb_dbase_backup
       ignore_errors: true
       register: dbase_restored
 
