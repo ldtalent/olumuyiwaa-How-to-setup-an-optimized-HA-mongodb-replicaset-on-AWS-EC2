@@ -13,3 +13,17 @@
 ### user data
 - there are 2 versions, one for the data nodes, the other for the hidden node
 - replace the placeholders for the [github](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/user-data-for-hidden-nodes.sh#L7) credentials with your values
+- ensure the [S3 Backup bucket](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/user-data-for-hidden-nodes.sh#L9) variable is replaced with your value, this applies to the user-data for both types of nodes
+
+### sample.conf
+- this is the production config file for mongodb. it will replace the default mongodb.conf file. 
+- replace the [replSetName](https://github.com/ldtalent/OlumuyiwaA-How-to-setup-an-optimized-HA-mongodb-replicaset-on-AWS-EC2/blob/main/replicaset/sample.conf#L38) variable with your chosen replica set name
+
+### sample-keyfile
+- this is the SSH keyfile used by replica set members for secure communication
+- do not use this file as is, rather generate your own e.g. 
+```
+openssl rand -base64 756 > <path-to-keyfile>
+```
+
+
